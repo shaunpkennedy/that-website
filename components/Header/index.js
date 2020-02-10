@@ -2,6 +2,8 @@ import router, { useRouter } from 'next/router';
 import nprogress from 'nprogress';
 import styled from 'styled-components';
 import React, { useEffect, useState } from 'react';
+import { useQuery } from '@apollo/react-hooks';
+import { gql } from 'apollo-boost';
 import * as gtag from '../../lib/gtag';
 
 import MessageBar from './MessageBar';
@@ -10,6 +12,28 @@ import ContentSection from '../shared/ContentSection';
 import LinkButton from '../shared/LinkButton';
 import { above, below } from '../../utilities';
 import MemberNav from './MemberNav';
+
+const GET_EVENT = gql`
+  query getEvent($eventId: ID!) {
+    events {
+      event(id: $eventId) {
+        get {
+          id
+          notifications {
+            id
+            shouldFeature
+            title
+            message
+            startDate
+            endDate
+            link
+            linkText
+          }
+        }
+      }
+    }
+  }
+`;
 
 router.onRouteChangeStart = () => {
   nprogress.start();
@@ -98,7 +122,7 @@ const MenuIcon = styled.div`
     content: '';
     display: block;
     height: 0.6rem;
-    margin: 0.7rem 0;
+    margin: 0.65rem 0;
     transition: all 0.3s ease-in-out;
   }
 
@@ -136,9 +160,27 @@ const HeaderLogo = ({ layered }) => {
   );
 };
 
-const Header = ({ className, layered, user, loading }) => {
+const Header = ({
+  className,
+  layered,
+  user,
+  loading,
+  mobileMenuOpen,
+  setMobileMenuOpen,
+}) => {
+  const {
+    loading: eventLoading,
+    error: eventError,
+    data: eventData,
+  } = useQuery(GET_EVENT, {
+    variables: { eventId: process.env.CURRENT_EVENT_ID },
+  });
+
+  if (eventLoading) return null;
+  if (eventError) return null;
+
+  const { event } = eventData.events;
   const [scrollY, setScrollY] = useState(0);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setScrollY(window.pageYOffset);
@@ -159,7 +201,11 @@ const Header = ({ className, layered, user, loading }) => {
 
   return (
     <header className={[className, scrolled()].join(' ')}>
-      <MessageBar user={user} loading={loading} />
+      <MessageBar
+        user={user}
+        loading={loading}
+        notifications={event.get.notifications}
+      />
       <HeaderSection backgroundColor="transparent">
         <PageHeader>
           <HeaderLogo layered={layered} />

@@ -4,33 +4,17 @@ import Imgix from 'react-imgix';
 import _ from 'lodash';
 import { Grid, Cell } from 'styled-css-grid';
 import ContentSection from '../shared/ContentSection';
-import SocialLinks from '../shared/SocialLinks';
-import NavItem from '../shared/NavItem';
+import PartnerLogoWithInfo from '../shared/PartnerLogoWithInfo';
 import PartnerDetailSubHeading from './PartnerDetailSubHeading';
 import { below, gridRepeat } from '../../utilities';
 
-const PartnerContact = styled.div`
+const LogoMemberSection = styled.div`
   display: flex;
-  flex-direction: column;
-  align-items: ${({ alignment }) => alignment};
-  flex-grow: 2;
+  flex-direction: row;
 
   ${below.med`
-    align-items: center;
+    flex-direction: column;
   `};
-`;
-
-const MainLogo = styled.img`
-  height: 15rem;
-  padding-bottom: 2rem;
-`;
-
-const VisitUs = styled.h5`
-  font-family: 'Open Sans', sans-serif;
-  margin-bottom: 0;
-  margin-top: 0.5rem;
-  font-size: 1.5rem;
-  font-weight: bold;
 `;
 
 const Name = styled.p`
@@ -54,9 +38,16 @@ const Title = styled.p`
 const SayHiDetail = styled.div`
   display: flex;
   flex-direction: column;
+  flex-grow: 2;
+
+  ${below.med`
+    padding-top: 4rem;
+    max-width: 70%;
+    margin: auto;
+  `};
 `;
 
-const Member = styled.div`
+const Member = styled(Cell)`
   display: flex;
   flex-direction: row;
 `;
@@ -68,17 +59,9 @@ const MemberDetail = styled.div`
   justify-content: center;
 `;
 
-const getHostName = website => {
-  let hostName = new URL(website).hostname;
-  if (hostName.toLowerCase().startsWith('www.')) {
-    hostName = hostName.replace('www.', '');
-  }
-  return hostName;
-};
-
 const renderMember = member => {
   return (
-    <Member>
+    <Member key={member.id}>
       <Imgix
         src={member.profileImage}
         width={60}
@@ -94,59 +77,31 @@ const renderMember = member => {
 };
 
 const MainLogoSection = ({ partner }) => {
-  const getPartnerSocialLinks = () => {
-    const socials = {};
-
-    if (partner.facebook) socials.facebook = partner.facebook;
-    if (partner.twitter) socials.twitter = partner.twitter;
-    if (partner.instagram) socials.instagram = partner.instagram;
-    if (partner.youtube) socials.youtube = partner.youtube;
-    if (partner.linkedin) socials.linkedin = partner.linkedIn;
-    if (partner.github) socials.github = partner.github;
-
-    return socials;
-  };
-
-  const LogoWithInfo = () => {
-    return (
-      <PartnerContact
-        alignment={_.isEmpty(partner.members) ? 'center' : 'flex-start'}
-      >
-        <MainLogo src={partner.companyLogo} alt={partner.companyName} />
-        <VisitUs>Visit us online at:</VisitUs>
-        <NavItem
-          href={partner.website}
-          title={getHostName(partner.website)}
-          target="blank"
-          isLocal={false}
-          style={{ paddingBottom: '1rem' }}
-        />
-        <SocialLinks socialLinks={getPartnerSocialLinks()} />
-      </PartnerContact>
-    );
-  };
+  let { members } = partner;
+  if (members && members.length && members.length > 0) {
+    members = _.chain(members)
+      .filter(m => m.isSponsoredFeatured)
+      .orderBy(members, ['partnerFeaturedOrder', 'asc'])
+      .value();
+  }
 
   return (
     <ContentSection backgroundColor="lightGray">
-      <Grid columns={gridRepeat.xxsmall}>
-        <Cell>
-          <LogoWithInfo />
-        </Cell>
+      <LogoMemberSection>
+        <PartnerLogoWithInfo partner={partner} />
         {!_.isEmpty(partner.members) && (
-          <Cell>
-            <SayHiDetail>
-              <PartnerDetailSubHeading>
-                Who to Say Hi to During THAT Conference
-              </PartnerDetailSubHeading>
-              <Grid columns={gridRepeat.xsmall}>
-                {partner.members.map(member => {
-                  return renderMember(member);
-                })}
-              </Grid>
-            </SayHiDetail>
-          </Cell>
+          <SayHiDetail>
+            <PartnerDetailSubHeading>
+              Who to Say Hi to During THAT Conference
+            </PartnerDetailSubHeading>
+            <Grid columns={gridRepeat.xsmall}>
+              {members.map(member => {
+                return renderMember(member);
+              })}
+            </Grid>
+          </SayHiDetail>
         )}
-      </Grid>
+      </LogoMemberSection>
     </ContentSection>
   );
 };

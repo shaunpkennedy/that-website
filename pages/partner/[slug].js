@@ -6,6 +6,7 @@ import { gql } from 'apollo-boost';
 import { Grid, Cell } from 'styled-css-grid';
 import Imgix from 'react-imgix';
 import _ from 'lodash';
+import { NextSeo } from 'next-seo';
 import LayeredHeaderLayout from '../../components/layouts/layeredHeader';
 import ContentSection from '../../components/shared/ContentSection';
 import Icon from '../../components/shared/Icon';
@@ -21,7 +22,6 @@ const GET_PARTNER = gql`
       partnerBySlug(slug: $slug) {
         id
         slug
-        year
         companyName
         companyLogo
         heroImage
@@ -39,6 +39,8 @@ const GET_PARTNER = gql`
         chat
         blog
         vlog
+        city
+        state
         jobListings {
           id
           title
@@ -49,11 +51,14 @@ const GET_PARTNER = gql`
           firstName
           lastName
           jobTitle
+          isSponsoredFeatured
+          partnerFeaturedOrder
           profileImage
         }
         sessions {
           id
           isSponsored
+          title
           shortDescription
           speakers {
             id
@@ -71,9 +76,26 @@ const MainDiv = styled.div`
   padding-bottom: 4rem;
 `;
 
+const MainGrid = styled(Grid)`
+  grid-gap: 3rem;
+`;
+
 const StyledP = styled.p`
   padding-right: 1rem;
   margin-top: 0;
+  font-weight: 200;
+  line-height: 1.6;
+
+  ${below.med`
+    margin-top: 0;
+  `};
+`;
+
+const JobDescription = styled.p`
+  padding-right: 1rem;
+  margin-top: 0;
+  font-weight: 200;
+  line-height: 1.6;
 
   ${below.med`
     margin-top: 0;
@@ -82,15 +104,22 @@ const StyledP = styled.p`
 
 const GoalsList = styled.ul`
   padding-inline-start: 2rem;
+  font-weight: 200;
+  line-height: 1.6;
+
+  li {
+    margin-bottom: 0.8rem;
+  }
 `;
 
 const JobDiv = styled.div`
-  margin-bottom: 5rem;
+  margin-bottom: 3rem;
 `;
 
 const Title = styled.h5`
   margin-bottom: 0;
   margin-top: 0;
+  font-weight: 500;
 `;
 
 const ViewLink = styled.a`
@@ -109,8 +138,9 @@ const Name = styled.p`
   line-height: 1;
   color: ${({ theme }) => theme.colors.fonts.dark};
   margin-bottom: 0.25rem;
-  font-weight: 500;
-  margin-top: 0;
+  font-weight: 400;
+  margin-top: 1rem;
+  text-align: center;
 `;
 
 const Arrow = styled(Icon)`
@@ -120,7 +150,7 @@ const Arrow = styled(Icon)`
 const Session = styled.div`
   display: flex;
   flex-direction: row;
-  margin-bottom: 3rem;
+  margin-bottom: 4rem;
 `;
 
 const Speaker = styled.div`
@@ -134,6 +164,12 @@ const SessionDetail = styled.div`
   flex-direction: column;
 `;
 
+const SpeakerDetailBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
 const ForwardArrow = () => (
   <Arrow
     icon="fullArrow"
@@ -144,19 +180,23 @@ const ForwardArrow = () => (
   />
 );
 const SpeakerDetail = ({ speaker }) => (
-  <div key={speaker.id}>
+  <SpeakerDetailBlock key={speaker.id}>
     <Imgix
       src={speaker.profileImage}
-      width={60}
-      height={60}
+      width={90}
+      height={90}
       imgixParams={{
         mask: 'ellipse',
         fit: 'facearea',
         facepad: 4,
       }}
     />
-    <Name>{`${speaker.firstName} ${speaker.lastName}`}</Name>
-  </div>
+    <Name>
+      {speaker.firstName}
+      <br />
+      {speaker.lastName}
+    </Name>
+  </SpeakerDetailBlock>
 );
 
 function PartnerDetail() {
@@ -165,7 +205,7 @@ function PartnerDetail() {
   const { loading, error, data } = useQuery(GET_PARTNER, {
     variables: { slug: router.query.slug },
     onCompleted(d) {
-      const [partner] = d.partners.partnerBySlug;
+      const partner = d.partners.partnerBySlug;
       let hostName = new URL(partner.website).hostname;
       if (hostName.toLowerCase().startsWith('www.')) {
         hostName = hostName.replace('www.', '');
@@ -178,7 +218,7 @@ function PartnerDetail() {
   if (loading) return null;
   if (error) return null;
 
-  const partner = data.partners.partnerBySlug[0];
+  const partner = data.partners.partnerBySlug;
 
   const AboutUs = () => (
     <>
@@ -207,7 +247,7 @@ function PartnerDetail() {
         partner.jobListings.map(job => (
           <JobDiv key={job.id}>
             <Title>{job.title}</Title>
-            <StyledP>{job.description}</StyledP>
+            <JobDescription>{job.description}</JobDescription>
           </JobDiv>
         ))}
       <ViewLink href="/">
@@ -223,49 +263,61 @@ function PartnerDetail() {
         Session By {partner.companyName}
       </PartnerDetailSubHeading>
       {partner.sessions &&
-        partner.sessions.map(session => (
-          <Session>
-            <Speaker>
-              {session.speakers.map(speaker => (
-                <SpeakerDetail speaker={speaker} />
-              ))}
-            </Speaker>
-            <SessionDetail>
-              <Title>{session.title}</Title>
-              <p>{session.shortDescription}</p>
-              <ViewLink href="/">
-                <span>View Session</span>
-                <ForwardArrow />
-              </ViewLink>
-            </SessionDetail>
-          </Session>
-        ))}
+        partner.sessions
+          .filter(i => i !== null)
+          .map(session => (
+            <Session key={session.id}>
+              <Speaker>
+                {session.speakers.map(speaker => (
+                  <SpeakerDetail speaker={speaker} key={speaker.id} />
+                ))}
+              </Speaker>
+              <SessionDetail>
+                <Title>{session.title}</Title>
+                <StyledP>{session.shortDescription}</StyledP>
+                <ViewLink href="/">
+                  <span>View Session</span>
+                  <ForwardArrow />
+                </ViewLink>
+              </SessionDetail>
+            </Session>
+          ))}
     </>
   );
 
   return (
-    <MainDiv>
-      <HeroSection
-        companyName={partner.companyName}
-        heroImageUrl={partner.heroImage}
-        connectWithUsUrl={partner.website}
-        location="wi"
+    <>
+      <NextSeo
+        title={`${partner.companyName} - THAT Conference`}
+        description={`Thank you to ${partner.companyName} for partnering with THAT Conference!`}
+        canonical={`https://www.thatconference.com/partner/${partner.slug}`}
+        openGraph={{
+          images: [{ url: partner.companyLogo }],
+        }}
       />
-      <MainLogoSection partner={partner} />
+      <MainDiv>
+        <HeroSection
+          companyName={partner.companyName}
+          heroImageUrl={partner.heroImage}
+          connectWithUsUrl={partner.website}
+          location="wi"
+        />
+        <MainLogoSection partner={partner} />
 
-      <ContentSection>
-        <Grid columns={gridRepeat.xxsmall}>
-          <Cell>
-            <AboutUs />
-            {!_.isEmpty(partner.sessions) && <Sessions />}
-          </Cell>
-          <Cell>
-            {!_.isEmpty(partner.goals) && <Goals />}
-            {!_.isEmpty(partner.jobs) && <Jobs />}
-          </Cell>
-        </Grid>
-      </ContentSection>
-    </MainDiv>
+        <ContentSection>
+          <MainGrid columns={gridRepeat.xxsmall}>
+            <Cell>
+              {!_.isEmpty(partner.aboutUs) && <AboutUs />}
+              {!_.isEmpty(partner.sessions) && <Sessions />}
+            </Cell>
+            <Cell>
+              {!_.isEmpty(partner.goals) && <Goals />}
+              {!_.isEmpty(partner.jobListings) && <Jobs />}
+            </Cell>
+          </MainGrid>
+        </ContentSection>
+      </MainDiv>
+    </>
   );
 }
 

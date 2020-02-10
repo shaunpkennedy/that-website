@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import NavItem from '../shared/NavItem';
+import ThatLink from '../shared/ThatLink';
 import { below } from '../../utilities';
 
 const NavList = styled.div`
@@ -17,10 +17,13 @@ const NavList = styled.div`
     background-color: ${({ theme }) => theme.colors.white};
     flex-direction: column;
     width: 100vw;
-    height: calc(100vh - 20rem);
+    height: calc(100vh - 14rem);
     left: 0;
-    top: 20rem;
-    padding-top: 2rem;
+    top: 18rem;
+
+    a:first-child {
+      padding-top: 2rem;
+    }
   `};
 `;
 
@@ -35,13 +38,13 @@ const Nav = ({ className, color, mobileMenuOpen, onClick }) => {
       <nav className={className}>
         <NavList mobileMenuOpen={mobileMenuOpen}>
           {/* <NavListItem>
-          <NavItem title="Schedule" href="/" />
+          <ThatLink title="Schedule" href="/" />
           </NavListItem>
           <NavListItem>
-            <NavItem title="Speakers" href="/" />
+            <ThatLink title="Speakers" href="/" />
           </NavListItem> */}
           <NavListItem>
-            <NavItem
+            <ThatLink
               title="Partners"
               href="/wi/partners"
               onClick={() => onClick(false)}
@@ -49,7 +52,7 @@ const Nav = ({ className, color, mobileMenuOpen, onClick }) => {
             />
           </NavListItem>
           <NavListItem>
-            <NavItem
+            <ThatLink
               title="Tickets"
               href="/wi/tickets"
               onClick={() => onClick(false)}
@@ -57,7 +60,7 @@ const Nav = ({ className, color, mobileMenuOpen, onClick }) => {
             />
           </NavListItem>
           <NavListItem>
-            <NavItem
+            <ThatLink
               title="Plan Your Trip"
               href="/wi/plan-your-trip"
               onClick={() => onClick(false)}
@@ -65,7 +68,7 @@ const Nav = ({ className, color, mobileMenuOpen, onClick }) => {
             />
           </NavListItem>
           {/* <NavListItem>
-            <NavItem
+            <ThatLink
               title="Shop"
               href="https://store.unspecified.io/"
               target="blank"
@@ -74,7 +77,7 @@ const Nav = ({ className, color, mobileMenuOpen, onClick }) => {
             />
           </NavListItem> */}
           <NavListItem>
-            <NavItem
+            <ThatLink
               title="Blog"
               href="/blog"
               onClick={() => onClick(false)}
@@ -82,7 +85,7 @@ const Nav = ({ className, color, mobileMenuOpen, onClick }) => {
             />
           </NavListItem>
           <NavListItem>
-            <NavItem
+            <ThatLink
               title="Contact"
               href="/contact"
               onClick={() => onClick(false)}
@@ -90,7 +93,7 @@ const Nav = ({ className, color, mobileMenuOpen, onClick }) => {
             />
           </NavListItem>
           <NavListItem>
-            <NavItem
+            <ThatLink
               title="About"
               href="/about"
               onClick={() => onClick(false)}
